@@ -11,9 +11,13 @@ import numpy as np
 # (low, high) per feature, in the order of src.features.FEATURE_NAMES
 FEATURE_RANGES = ((-86.0, 198.0), (-105.0, 105.0), (-9.0, 11.0), (0.0, 404.0))
 
-# Bins per feature (dx, dy, vy, y) for the resolution ablation.
-BINS_COARSE = (8, 9, 10, 6)  # 4,320 states
-BINS_DEFAULT = (12, 15, 20, 10)  # 36,000 states
+# Bins per feature (dx, dy, vy, y). The selected Q-learning set collapses y to one bin.
+BINS_CORE_COARSE = (6, 7, 5, 1)  # 210 states   (resolution ablation)
+BINS_CORE = (8, 9, 10, 1)  # 720 states   (selected by tuning)
+BINS_CORE_FINE = (12, 15, 20, 1)  # 3,600 states (resolution ablation)
+BINS_Y3 = (8, 9, 10, 3)  # 2,160 states (y-resolution ablation)
+BINS_COARSE = (8, 9, 10, 6)  # 4,320 states (y-resolution ablation)
+BINS_DEFAULT = (12, 15, 20, 10)  # 36,000 states (original design; too sparse)
 BINS_FINE = (20, 25, 20, 15)  # 150,000 states
 
 
