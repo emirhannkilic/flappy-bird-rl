@@ -1,0 +1,48 @@
+import numpy as np
+import pytest
+
+from src.agents.baselines import HeuristicPolicy
+from src.agents.qlearning import QLearningAgent
+from src.runner import evaluate, linear_epsilon, train
+
+
+def test_linear_epsilon():
+    assert linear_epsilon(0, 1.0, 0.05, 100) == 1.0
+    assert linear_epsilon(50, 1.0, 0.05, 100) == pytest.approx(0.525)
+    assert linear_epsilon(100, 1.0, 0.05, 100) == pytest.approx(0.05)
+    assert linear_epsilon(10_000, 1.0, 0.05, 100) == pytest.approx(0.05)  # stays at the floor
+
+
+def test_evaluate_is_deterministic_and_reports_stats():
+    a = evaluate(HeuristicPolicy(), episodes=3, score_limit=5, seed=1)
+    b = evaluate(HeuristicPolicy(), episodes=3, score_limit=5, seed=1)
+    assert a == b
+    assert len(a["scores"]) == 3 and 0.0 <= a["capped_rate"] <= 1.0
+    assert all(s <= 5 for s in a["scores"])
+
+
+def test_evaluate_capped_rate_counts_truncation():
+    stats = evaluate(HeuristicPolicy(), episodes=3, score_limit=2, seed=0)
+    assert stats["capped_rate"] > 0 and max(stats["scores"]) == 2
+
+
+def run(seed):
+    agent = QLearningAgent(seed=seed)
+    log = train(agent, total_steps=4000, seed=seed, epsilon_decay_steps=2000,
+                eval_every=2000, eval_episodes=3, eval_score_limit=5)
+    return agent, log
+
+
+def test_train_log_structure_and_budget():
+    _, log = run(0)
+    assert [e["step"] for e in log["evals"]] == [2000, 4000]
+    assert log["train_episodes"][-1]["end_step"] <= 4000
+    assert sum(ep["length"] for ep in log["train_episodes"]) <= 4000
+
+
+def test_train_is_reproducible_for_same_seed_and_differs_across_seeds():
+    a1, l1 = run(0)
+    a2, l2 = run(0)
+    a3, _ = run(1)
+    assert l1 == l2 and np.array_equal(a1.q, a2.q)
+    assert not np.array_equal(a1.q, a3.q)
