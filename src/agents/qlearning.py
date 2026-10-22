@@ -48,7 +48,8 @@ class QLearningAgent:
         self.q[s, action] += self.alpha * (target - self.q[s, action])
 
     def save(self, path) -> None:
-        np.save(path, self.q)
+        with open(path, "wb") as f:  # a file object stops np.save from appending '.npy' to the path
+            np.save(f, self.q)
 
     def load(self, path) -> None:
         q = np.load(path)

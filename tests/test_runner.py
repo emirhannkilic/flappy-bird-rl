@@ -58,3 +58,13 @@ def test_checkpoints_saved_at_requested_steps_and_diagnostics_logged(tmp_path):
     assert "diagnostics" in log["evals"][0] and "abs_q_max" in log["evals"][0]["diagnostics"]
     with pytest.raises(ValueError):
         train(QLearningAgent(), 10, 0, 5, checkpoint_steps=(5,))
+
+
+def test_qlearning_checkpoint_keeps_exact_filename_and_reloads(tmp_path):
+    agent = QLearningAgent(seed=0)
+    train(agent, total_steps=300, seed=0, epsilon_decay_steps=100, eval_every=300, eval_episodes=1,
+          eval_score_limit=2, checkpoint_steps=(300,), checkpoint_dir=tmp_path, checkpoint_prefix="q")
+    assert [f.name for f in tmp_path.iterdir()] == ["q_step300.ckpt"]  # no '.npy' suffix appended
+    fresh = QLearningAgent(seed=1)
+    fresh.load(tmp_path / "q_step300.ckpt")
+    assert np.array_equal(fresh.q, agent.q)
