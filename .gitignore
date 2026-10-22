@@ -10,3 +10,7 @@ __pycache__/
 
 # OS / editor
 .DS_Store
+
+# Local working notes (not pushed)
+CLAUDE.md
+PROGRESS.md
