@@ -1,0 +1,12 @@
+# Course template (kept local only); docs/ itself stays tracked for GitHub Pages
+docs/CMP4501_Report_Template/
+docs/CMP4501_Report_Template.pdf
+
+# Python
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# OS / editor
+.DS_Store
