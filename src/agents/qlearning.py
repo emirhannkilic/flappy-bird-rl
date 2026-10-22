@@ -46,3 +46,12 @@ class QLearningAgent:
         if not terminated:
             target += self.gamma * self.q[self.discretizer.encode(next_features)].max()
         self.q[s, action] += self.alpha * (target - self.q[s, action])
+
+    def save(self, path) -> None:
+        np.save(path, self.q)
+
+    def load(self, path) -> None:
+        q = np.load(path)
+        if q.shape != self.q.shape:
+            raise ValueError(f"checkpoint shape {q.shape} != agent shape {self.q.shape}")
+        self.q = q

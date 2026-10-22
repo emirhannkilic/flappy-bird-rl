@@ -43,6 +43,8 @@ def build_agent(args):
             columns=(0, 1, 2, 3) if args.use_y else (0, 1, 2),
             lr=args.lr,
             gamma=args.gamma,
+            target_sync_steps=args.target_sync_steps,
+            buffer_size=args.buffer_size,
             explore_flap_prob=args.explore_flap_prob,
             seed=args.seed,
         )
@@ -61,12 +63,17 @@ def main(argv=None):
     p.add_argument("--tie-break", choices=["random", "idle"], default="idle")
     p.add_argument("--bins", choices=sorted(BIN_PRESETS), default="core")
     p.add_argument("--lr", type=float, default=3e-4, help="DQN only")
+    p.add_argument("--target-sync-steps", type=int, default=2_000, help="DQN only")
+    p.add_argument("--buffer-size", type=int, default=50_000, help="DQN only")
     p.add_argument("--use-y", action="store_true", help="DQN only: add the absolute height y as a 4th input")
     p.add_argument("--eval-every", type=int, default=50_000)
     p.add_argument("--eval-episodes", type=int, default=20)
+    p.add_argument("--checkpoint-steps", type=int, nargs="*", default=[])
+    p.add_argument("--checkpoint-dir", type=Path, default=None)
     p.add_argument("--out", type=Path, default=None)
     args = p.parse_args(argv)
 
+    out = args.out or Path("results") / f"{args.agent}_{args.bins}_seed{args.seed}.json"
     log = train(
         build_agent(args),
         total_steps=args.steps,
@@ -74,9 +81,11 @@ def main(argv=None):
         epsilon_decay_steps=args.eps_decay_steps,
         eval_every=args.eval_every,
         eval_episodes=args.eval_episodes,
+        checkpoint_steps=tuple(args.checkpoint_steps),
+        checkpoint_dir=args.checkpoint_dir,
+        checkpoint_prefix=out.stem,
     )
     log["config"] = {k: str(v) if isinstance(v, Path) else v for k, v in vars(args).items()}
-    out = args.out or Path("results") / f"{args.agent}_{args.bins}_seed{args.seed}.json"
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(json.dumps(log))
     last = log["evals"][-1]

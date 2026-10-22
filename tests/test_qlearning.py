@@ -69,3 +69,12 @@ def test_explore_flap_prob_biases_the_exploration_branch():
     flaps = np.mean([a.act(F, 1.0) for _ in range(4000)])
     assert 0.07 < flaps < 0.13
     assert {QLearningAgent(seed=0, explore_flap_prob=0.0).act(F, 1.0) for _ in range(50)} == {0}
+
+
+def test_save_load_roundtrip(tmp_path):
+    a = agent()
+    a.observe(F, 1, 1.0, F2, terminated=False)
+    a.save(tmp_path / "q.npy")
+    b = agent()
+    b.load(tmp_path / "q.npy")
+    assert np.array_equal(a.q, b.q)

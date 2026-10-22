@@ -83,6 +83,7 @@ class DQNAgent:
         self.optimizer = torch.optim.Adam(self.online.parameters(), lr=lr)
         self.buffer = ReplayBuffer(buffer_size, obs_dim)
         self.steps = 0
+        self.loss_ema: float | None = None  # exponential moving average of the Huber loss
 
     def _q_values(self, features: np.ndarray) -> torch.Tensor:
         with torch.no_grad():
@@ -119,4 +120,32 @@ class DQNAgent:
         loss.backward()
         nn.utils.clip_grad_norm_(self.online.parameters(), self.grad_clip)
         self.optimizer.step()
-        return loss.item()
+        value = loss.item()
+        self.loss_ema = value if self.loss_ema is None else 0.99 * self.loss_ema + 0.01 * value
+        return value
+
+    def diagnostics(self, recent: int = 1024) -> dict:
+        """Training-health metrics; deterministic and RNG-free (uses the latest transitions)."""
+        size = self.buffer.size
+        n = min(size, recent)
+        idx = (self.buffer._next - n + np.arange(n)) % self.buffer.capacity
+        with torch.no_grad():
+            q = self.online(torch.from_numpy(self.buffer.obs[idx])).abs() if size else torch.zeros(1)
+        return {
+            "buffer_terminal_rate": float(self.buffer.terminated[:size].mean()) if size else 0.0,
+            f"recent_terminal_rate_{recent}": float(self.buffer.terminated[idx].mean()) if size else 0.0,
+            "loss_ema": self.loss_ema,
+            "abs_q_mean": float(q.mean()),
+            "abs_q_max": float(q.max()),
+        }
+
+    def save(self, path) -> None:
+        torch.save({"columns": self.columns, "online": self.online.state_dict(), "steps": self.steps}, path)
+
+    def load(self, path) -> None:
+        """Load policy weights into an agent built with the same `columns`."""
+        ckpt = torch.load(path, weights_only=True)
+        if tuple(ckpt["columns"]) != self.columns:
+            raise ValueError(f"checkpoint columns {ckpt['columns']} != agent columns {self.columns}")
+        self.online.load_state_dict(ckpt["online"])
+        self.target.load_state_dict(ckpt["online"])

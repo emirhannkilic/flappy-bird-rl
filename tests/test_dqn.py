@@ -98,3 +98,37 @@ def test_same_seed_gives_identical_weights():
 
     assert torch.equal(run(0), run(0))
     assert not torch.equal(run(0), run(1))
+
+
+def test_diagnostics_reports_terminal_fraction_and_q_stats():
+    a = small_agent(buffer_size=100)
+    assert a.diagnostics()["buffer_terminal_rate"] == 0.0  # empty buffer is safe
+    for i in range(40):
+        a.observe(F + i, i % 2, 0.1, F + i + 1, i % 4 == 0)
+    d = a.diagnostics()
+    assert d["buffer_terminal_rate"] == pytest.approx(10 / 40)
+    assert a.diagnostics(recent=8)["recent_terminal_rate_8"] == pytest.approx(2 / 8)  # last 8 of 40: i=32..39 -> 32, 36
+    assert d["loss_ema"] is not None and d["loss_ema"] >= 0
+    assert 0 <= d["abs_q_mean"] <= d["abs_q_max"]
+
+
+def test_diagnostics_does_not_touch_the_rng():
+    a = small_agent()
+    for i in range(20):
+        a.observe(F + i, 0, 0.1, F + i, False)
+    state = a.rng.bit_generator.state
+    a.diagnostics()
+    assert a.rng.bit_generator.state == state
+
+
+def test_save_load_roundtrip_and_column_mismatch(tmp_path):
+    a = small_agent(seed=0)
+    for i in range(20):
+        a.observe(F + i, i % 2, 0.1, F + i + 1, False)
+    a.save(tmp_path / "a.ckpt")
+    b = small_agent(seed=5)
+    b.load(tmp_path / "a.ckpt")
+    assert all(torch.equal(x, y) for x, y in zip(a.online.parameters(), b.online.parameters()))
+    assert a.greedy(F) == b.greedy(F)
+    with pytest.raises(ValueError):
+        small_agent(columns=(0, 1, 2, 3)).load(tmp_path / "a.ckpt")

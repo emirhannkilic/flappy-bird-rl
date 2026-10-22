@@ -7,6 +7,7 @@ Every agent implements:
 so all methods share the same budget, exploration schedule and evaluation protocol.
 """
 import random
+from pathlib import Path
 
 import numpy as np
 import torch
@@ -67,9 +68,15 @@ def train(
     eval_episodes: int = 20,
     train_score_limit: int | None = 100,
     eval_score_limit: int | None = 100,
+    checkpoint_steps: tuple[int, ...] = (),
+    checkpoint_dir: Path | None = None,
+    checkpoint_prefix: str = "agent",
 ) -> dict:
     """Train for exactly `total_steps` environment steps; evaluate every `eval_every` steps
-    and once at the end. Returns a JSON-serialisable log."""
+    and once at the end. If `checkpoint_dir` is given, `agent.save` is called at every step in
+    `checkpoint_steps` (file `<prefix>_step<N>.ckpt`). Returns a JSON-serialisable log."""
+    if checkpoint_steps and checkpoint_dir is None:
+        raise ValueError("checkpoint_steps requires checkpoint_dir")
     seed_everything(seed)
     env = make_env(train_score_limit)
     obs, _ = env.reset(seed=seed)  # seeded once per run, never per episode
@@ -97,6 +104,12 @@ def train(
 
         if (step + 1) % eval_every == 0 or step + 1 == total_steps:
             stats = evaluate(agent.greedy, eval_episodes, eval_score_limit, seed + EVAL_SEED_OFFSET)
-            evals.append({"step": step + 1, **stats})
+            record = {"step": step + 1, **stats}
+            if hasattr(agent, "diagnostics"):
+                record["diagnostics"] = agent.diagnostics()
+            evals.append(record)
+        if step + 1 in checkpoint_steps:
+            Path(checkpoint_dir).mkdir(parents=True, exist_ok=True)
+            agent.save(Path(checkpoint_dir) / f"{checkpoint_prefix}_step{step + 1}.ckpt")
     env.close()
     return {"seed": seed, "total_steps": total_steps, "train_episodes": train_episodes, "evals": evals}

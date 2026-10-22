@@ -46,3 +46,15 @@ def test_train_is_reproducible_for_same_seed_and_differs_across_seeds():
     a3, _ = run(1)
     assert l1 == l2 and np.array_equal(a1.q, a2.q)
     assert not np.array_equal(a1.q, a3.q)
+
+
+def test_checkpoints_saved_at_requested_steps_and_diagnostics_logged(tmp_path):
+    from src.agents.dqn import DQNAgent
+
+    agent = DQNAgent(warmup_steps=200, seed=0)
+    log = train(agent, total_steps=600, seed=0, epsilon_decay_steps=300, eval_every=300, eval_episodes=1,
+                eval_score_limit=2, checkpoint_steps=(300, 600), checkpoint_dir=tmp_path, checkpoint_prefix="run")
+    assert sorted(f.name for f in tmp_path.iterdir()) == ["run_step300.ckpt", "run_step600.ckpt"]
+    assert "diagnostics" in log["evals"][0] and "abs_q_max" in log["evals"][0]["diagnostics"]
+    with pytest.raises(ValueError):
+        train(QLearningAgent(), 10, 0, 5, checkpoint_steps=(5,))
