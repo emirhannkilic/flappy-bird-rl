@@ -14,19 +14,25 @@ class QLearningAgent:
         gamma: float = 0.99,
         seed: int = 0,
         explore_flap_prob: float = 0.5,
+        tie_break: str = "random",
     ):
+        if tie_break not in ("random", "idle"):
+            raise ValueError("tie_break must be 'random' or 'idle'")
         self.discretizer = discretizer or Discretizer()
         self.alpha = alpha
         self.gamma = gamma
         self.explore_flap_prob = explore_flap_prob  # P(flap) when the epsilon branch fires
+        self.tie_break = tie_break  # exploitation ties: 'random' or 'idle' (lowest index = no flap)
         self.q = np.zeros((self.discretizer.n_states, N_ACTIONS))
         self.rng = np.random.default_rng(seed)  # exploration and exploration tie-breaks only
 
     def act(self, features: np.ndarray, epsilon: float) -> int:
-        """Epsilon-greedy action; ties among greedy actions are broken at random."""
+        """Biased epsilon-greedy: with prob. epsilon flap w.p. `explore_flap_prob`, else greedy."""
         if self.rng.random() < epsilon:
             return int(self.rng.random() < self.explore_flap_prob)
         row = self.q[self.discretizer.encode(features)]
+        if self.tie_break == "idle":
+            return int(np.argmax(row))
         return int(self.rng.choice(np.flatnonzero(row == row.max())))
 
     def greedy(self, features: np.ndarray) -> int:

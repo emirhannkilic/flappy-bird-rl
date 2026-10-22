@@ -5,7 +5,7 @@ FLAP_THRESHOLD = 8.0  # flap when the bird centre is more than this many px belo
 
 
 class RandomPolicy:
-    def __init__(self, flap_prob: float = 0.1, seed: int = 0):
+    def __init__(self, flap_prob: float = 0.5, seed: int = 0):  # 0.5 = uniform; 0.1 = 'biased random'
         self.flap_prob = flap_prob
         self.rng = np.random.default_rng(seed)
 

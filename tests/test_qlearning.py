@@ -41,8 +41,20 @@ def test_greedy_is_deterministic_and_leaves_rng_untouched():
 
 
 def test_exploitation_breaks_ties_randomly():
-    a = agent()
+    a = agent(tie_break="random")
     assert {a.act(F, 0.0) for _ in range(200)} == {0, 1}
+
+
+def test_idle_tie_break_never_flaps_in_unseen_states():
+    a = agent(tie_break="idle")
+    assert {a.act(F, 0.0) for _ in range(200)} == {0}
+    a.q[a.discretizer.encode(F)] = [0.0, 1.0]
+    assert {a.act(F, 0.0) for _ in range(50)} == {1}
+
+
+def test_invalid_tie_break_rejected():
+    with pytest.raises(ValueError):
+        agent(tie_break="nope")
 
 
 def test_baselines():
