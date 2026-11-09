@@ -66,6 +66,7 @@ def main(argv=None):
     p.add_argument("--target-sync-steps", type=int, default=2_000, help="DQN only")
     p.add_argument("--buffer-size", type=int, default=50_000, help="DQN only")
     p.add_argument("--use-y", action="store_true", help="DQN only: add the absolute height y as a 4th input")
+    p.add_argument("--no-alive-reward", action="store_true", help="ablation: zero the +0.1 survival reward")
     p.add_argument("--eval-every", type=int, default=50_000)
     p.add_argument("--eval-episodes", type=int, default=20)
     p.add_argument("--checkpoint-steps", type=int, nargs="*", default=[])
@@ -84,6 +85,7 @@ def main(argv=None):
         checkpoint_steps=tuple(args.checkpoint_steps),
         checkpoint_dir=args.checkpoint_dir,
         checkpoint_prefix=out.stem,
+        alive_reward=not args.no_alive_reward,
     )
     log["config"] = {k: str(v) if isinstance(v, Path) else v for k, v in vars(args).items()}
     out.parent.mkdir(parents=True, exist_ok=True)

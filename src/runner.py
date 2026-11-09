@@ -71,6 +71,7 @@ def train(
     checkpoint_steps: tuple[int, ...] = (),
     checkpoint_dir: Path | None = None,
     checkpoint_prefix: str = "agent",
+    alive_reward: bool = True,
 ) -> dict:
     """Train for exactly `total_steps` environment steps; evaluate every `eval_every` steps
     and once at the end. If `checkpoint_dir` is given, `agent.save` is called at every step in
@@ -78,7 +79,7 @@ def train(
     if checkpoint_steps and checkpoint_dir is None:
         raise ValueError("checkpoint_steps requires checkpoint_dir")
     seed_everything(seed)
-    env = make_env(train_score_limit)
+    env = make_env(train_score_limit, alive_reward)
     obs, _ = env.reset(seed=seed)  # seeded once per run, never per episode
     features = extract_features(obs)
 
