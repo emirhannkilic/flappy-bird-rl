@@ -1,0 +1,178 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Flappy Bird RL: Q-learning vs DQN</title>
+  <meta name="description" content="Tabular Q-learning and DQN on Flappy Bird with the same state features, exploration schedule and evaluation protocol. Five seeds, 3M steps each.">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <a class="skip" href="#main">Skip to content</a>
+
+  <header class="hero">
+    <div class="wrap">
+      <p class="meta">CMP4501 course project</p>
+      <h1>Flappy Bird RL: Q-learning vs DQN</h1>
+      <p class="question">Given the same three state features, the same exploration schedule and the same 3M-step budget, does a small DQN learn Flappy Bird better than tabular Q-learning?</p>
+      <p class="result">At 3M steps DQN has the higher mean score (<strong>253.5</strong> pipes against <strong>84.7</strong>), but the seeds disagree too much to call that a difference: individual DQN seeds range from 57 to 472, and the one-standard-deviation bands of the learning curves overlap at 10 of the 12 evaluation points.</p>
+      <a class="repo" href="https://github.com/emirhannkilic/flappy-bird-rl">Code on GitHub</a>
+    </div>
+  </header>
+
+  <nav aria-label="Contents">
+    <div class="wrap">
+      <ul>
+        <li><a href="#setup">Setup</a></li>
+        <li><a href="#results">Results</a></li>
+        <li><a href="#ablations">Ablations</a></li>
+        <li><a href="#videos">Videos</a></li>
+        <li><a href="#limitations">Limitations</a></li>
+        <li><a href="#reproduce">Reproducing</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <main id="main">
+    <section id="setup" aria-labelledby="h-setup">
+      <div class="wrap">
+        <h2 id="h-setup">Experimental setup</h2>
+        <dl class="setup">
+          <dt>Environment</dt>
+          <dd><code>flappy-bird-gymnasium</code> 0.4.0, <code>FlappyBird-v0</code>, raw pixel observation (no lidar). Score is the number of pipes passed.</dd>
+          <dt>State</dt>
+          <dd>Three features for both agents: horizontal distance to the pipe that currently blocks the bird, vertical offset to the gap centre, and vertical velocity. The bird's absolute height is used only in ablations.</dd>
+          <dt>Q-learning</dt>
+          <dd>Table over 720 discretised states, learning rate 0.1, discount 0.99.</dd>
+          <dt>DQN</dt>
+          <dd>3-64-64-2 ReLU network, Adam at 3e-4, batch 64, replay buffer 50k, target network synced every 2k steps, Huber loss.</dd>
+          <dt>Exploration</dt>
+          <dd>Epsilon falls from 1.0 to 0.05 over the first 300k steps for both agents. In the exploratory branch the bird flaps with probability 0.05, because a 50% flap rate pins it to the ceiling and it dies at the first pipe.</dd>
+          <dt>Budget</dt>
+          <dd>Five training seeds (0 to 4), 3M environment steps each. Checkpoints at 500k, 1M, 2M and 3M. Hyperparameters were tuned on separate seeds (100 to 102).</dd>
+          <dt>Evaluation</dt>
+          <dd>Greedy policy (no exploration). Final scores: 100 episodes per seed with a limit of 500 pipes, on an evaluation environment seeded with the training seed plus 10000. Learning curves use a cheaper periodic evaluation (50 episodes, limit 100, every 250k steps). Numbers are the mean and standard deviation across the five seeds.</dd>
+          <dt>Baselines</dt>
+          <dd>Uniform random, biased random (flap probability 0.1) and a hand-written rule that flaps when the bird is more than 8 px below the gap centre.</dd>
+        </dl>
+      </div>
+    </section>
+
+    <section id="results" aria-labelledby="h-results">
+      <div class="wrap">
+        <h2 id="h-results">Main results</h2>
+        <p class="note">Final evaluation, 100 greedy episodes per seed, limit 500 pipes. Mean ± standard deviation over 5 seeds.</p>
+        <div class="scroll" tabindex="0" role="region" aria-label="Main results table">
+          <table>
+            <thead>
+              <tr><th scope="col">Agent</th><th scope="col">Score (pipes)</th><th scope="col">Reached limit (%)</th><th scope="col">Episode length (steps)</th></tr>
+            </thead>
+            <tbody>
+              <tr><th scope="row">Random (uniform)</th><td>0.0 ± 0.0</td><td>0.0 ± 0.0</td><td>50 ± 0</td></tr>
+              <tr><th scope="row">Random (biased, p = 0.1)</th><td>0.0 ± 0.0</td><td>0.0 ± 0.0</td><td>50 ± 0</td></tr>
+              <tr><th scope="row">Heuristic</th><td>31.4 ± 2.2</td><td>0.0 ± 0.0</td><td>1231 ± 84</td></tr>
+              <tr><th scope="row">Q-learning, 1M steps</th><td>74.7 ± 39.3</td><td>1.4 ± 2.2</td><td>2859 ± 1481</td></tr>
+              <tr><th scope="row">Q-learning, 3M steps</th><td>84.7 ± 61.1</td><td>2.0 ± 4.5</td><td>3239 ± 2299</td></tr>
+              <tr><th scope="row">DQN, 1M steps</th><td>81.2 ± 42.1</td><td>2.0 ± 3.1</td><td>3104 ± 1590</td></tr>
+              <tr><th scope="row">DQN, 3M steps</th><td>253.5 ± 192.3</td><td>37.6 ± 43.8</td><td>9587 ± 7234</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>The DQN mean at 3M is pulled up by two seeds that nearly always reach the limit (432 and 472); the other three score 57, 83 and 224. Q-learning's seeds at 3M are 47, 50, 67, 68 and 193 (rounded). At 3M all ten runs score above the hand-written rule's 31.4.</p>
+
+        <figure>
+          <a href="figures/learning_curves.png"><img src="figures/learning_curves.png" width="1200" height="720"
+               alt="Line chart of mean greedy score against training steps from 0.25 to 3 million, for Q-learning and DQN, each with a shaded band of one standard deviation over five seeds. DQN stays between about 50 and 75 pipes, Q-learning between about 35 and 53. The two shaded bands overlap everywhere except at 500k and 2.25 million steps. A dotted horizontal line marks the threshold of 50."></a>
+          <figcaption>Learning curves from the periodic evaluation (50 episodes, limit 100, every 250k steps). Lines are the mean over 5 seeds, shaded bands are ± 1 standard deviation. Scores here are capped at 100 and are not comparable with the table above. <a href="figures/learning_curves.png">Open full size.</a></figcaption>
+        </figure>
+
+        <p>Taking the first evaluation that reaches a mean score of 50 as a threshold, 4 of 5 Q-learning seeds get there (mean 1.81M ± 0.80M steps) and 5 of 5 DQN seeds do, four of them at the first evaluation at 250k. That result is limited by the 250k evaluation spacing, so we do not report DQN as faster.</p>
+      </div>
+    </section>
+
+    <section id="ablations" aria-labelledby="h-ablations">
+      <div class="wrap">
+        <h2 id="h-ablations">Ablations</h2>
+        <p>One factor changes at a time against the reference run (720 states, no height input, alive reward on, flap probability 0.05). Thirteen configurations, five seeds and 3M steps each, same evaluation as above.</p>
+        <figure>
+          <a href="figures/ablation.png"><img src="figures/ablation.png" width="1300" height="1440"
+               alt="Two stacked dot plots of the score at 3 million steps, one for Q-learning and one for DQN. Each row is one configuration and shows five dots, one per seed, with a black bar at the mean. A dotted red line marks the reference mean. For Q-learning the 3600-state table has the lowest scores, close to 10, and removing the alive reward has the highest mean with one seed near 340. For DQN the configuration that adds the height input has all five seeds below 40, far from the reference mean of about 254."></a>
+          <figcaption>Score at 3M steps per configuration. Each dot is one seed (mean of 100 episodes), the black bar is the mean, the dotted line is the reference mean. <a href="figures/ablation.png">Open full size.</a></figcaption>
+        </figure>
+        <ul>
+          <li>A finer Q-table scored lower: 3600 states gave 9.3 ± 4.0 against 84.7 ± 61.1 for the reference (Welch p = 0.05, uncorrected). The likely cause is a sparse table that rarely revisits states, though we did not measure visit counts. The coarser table and the two tables with height added also scored lower but cannot be told apart from the reference (p between 0.17 and 0.23).</li>
+          <li>Adding the bird's absolute height as a fourth DQN input did not help: all five seeds ended between 14 and 38 at 3M, against 253.5 ± 192.3 for the reference (p = 0.06). We expected the network to use the extra information without the sparsity problem the table has.</li>
+          <li>Removing the +0.1 survival reward did not stop learning in either method (Q-learning 134.4 ± 119.4, DQN 246.5 ± 176.8). A 50% flap rate in exploration gave the lowest DQN mean (50.3 ± 42.8), but with this spread it is not distinguishable from the reference (p = 0.08).</li>
+        </ul>
+        <p class="note">With 13 comparisons and five seeds, no ablation survives a multiple-comparison correction (the Bonferroni threshold is about 0.004). We describe these as observations, not established effects.</p>
+      </div>
+    </section>
+
+    <section id="videos" aria-labelledby="h-videos">
+      <div class="wrap">
+        <h2 id="h-videos">Agent behaviour</h2>
+        <p>Rollouts of the greedy policies on the final-evaluation environment. Videos do not play automatically.</p>
+        <div class="videos">
+          <figure>
+            <h3>DQN, seed 2, 3M steps</h3>
+            <video controls preload="metadata" playsinline aria-describedby="v1">
+              <source src="videos/dqn_seed2_step3000000_ep0_success.mp4" type="video/mp4">
+            </video>
+            <figcaption id="v1">Episode 0 reaches the 500-pipe limit. The clip shows the first 900 steps, roughly 23 pipes. This seed reaches the limit in 91 of 100 episodes.</figcaption>
+          </figure>
+          <figure>
+            <h3>Q-learning, seed 4, 3M steps</h3>
+            <video controls preload="metadata" playsinline aria-describedby="v2">
+              <source src="videos/qlearning_seed4_step3000000_ep24_success.mp4" type="video/mp4">
+            </video>
+            <figcaption id="v2">Episode 24, the first of 10 episodes out of 100 that reach the limit. It was selected because it succeeds; most episodes of this seed end in a crash. The clip shows the first 900 steps.</figcaption>
+          </figure>
+          <figure>
+            <h3>DQN, seed 2, 1M steps</h3>
+            <video controls preload="metadata" playsinline aria-describedby="v3">
+              <source src="videos/dqn_seed2_step1000000_ep0_death.mp4" type="video/mp4">
+            </video>
+            <figcaption id="v3">The same seed and the same episode as the first clip, an earlier checkpoint. The bird crashes into an upper pipe after 86 pipes (3286 steps); the clip shows the final 900 steps. Seed 2 scores 460 at 500k, 66 at 1M, 181 at 2M and 472 at 3M, and none of its 100 episodes reach the limit at 1M.</figcaption>
+          </figure>
+        </div>
+        <p>Across both methods at 3M, every crash is a pipe collision within 10 px of the pipe's leading edge, and none is a ground collision. Whether the bird hits the upper or lower pipe depends on the seed, not on the method.</p>
+      </div>
+    </section>
+
+    <section id="limitations" aria-labelledby="h-limitations">
+      <div class="wrap">
+        <h2 id="h-limitations">Limitations</h2>
+        <ul>
+          <li>Five seeds per configuration. The standard deviation across DQN seeds is close to the mean, so the comparison cannot support a claim that one method is better.</li>
+          <li>Scores move a lot between checkpoints of the same run, so a single checkpoint is a noisy summary of an agent. The 3M DQN mean is the highest of its four checkpoints.</li>
+          <li>The limit of 500 pipes truncates the best runs. 37.6% of DQN's 3M evaluation episodes hit it, so the true mean is higher than reported.</li>
+          <li>Hyperparameters were tuned on three seeds. Tuning DQN's stability (learning rate, target sync, buffer size) did not help, and we kept the original configuration. We use vanilla DQN with no extensions.</li>
+          <li>P-values are uncorrected and based on five seeds. Treat them as a rough guide.</li>
+          <li>The success videos are selected episodes and show only the start of an episode.</li>
+          <li>One environment and one feature set. The results say nothing about other state representations beyond the ablations above.</li>
+        </ul>
+      </div>
+    </section>
+
+    <section id="reproduce" aria-labelledby="h-reproduce">
+      <div class="wrap">
+        <h2 id="h-reproduce">Reproducing</h2>
+        <p>Training seeds are 0 to 4. Each evaluation environment is seeded with the training seed plus 10000 and reset once per evaluation, so a checkpoint's score is deterministic. Tuning used seeds 100 to 102. Dependency versions are pinned in <code>requirements.txt</code> (verified on Python 3.14, macOS).</p>
+        <pre><code>python -m src.train --agent dqn --seed 0 --steps 3000000 \
+  --eval-every 250000 --eval-episodes 50 \
+  --checkpoint-steps 500000 1000000 2000000 3000000 \
+  --checkpoint-dir results/main/dqn/checkpoints \
+  --out results/main/dqn/dqn_seed0.json
+python -m scripts.final_eval --root results/main</code></pre>
+        <p>Raw logs and checkpoints are not in the repository. The <a href="https://github.com/emirhannkilic/flappy-bird-rl">README</a> lists every command, including the ablations, the report scripts and the video script.</p>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="wrap">
+      <p>CMP4501 course project. Source: <a href="https://github.com/emirhannkilic/flappy-bird-rl">github.com/emirhannkilic/flappy-bird-rl</a>.</p>
+    </div>
+  </footer>
+</body>
+</html>

@@ -51,7 +51,7 @@ Mean score (pipes passed) over 5 seeds, plus or minus the standard deviation acr
 | Q-learning | 74.7 ± 39.3 | 84.7 ± 61.1 |
 | DQN | 81.2 ± 42.1 | 253.5 ± 192.3 |
 
-DQN has the higher mean at 3M, but the spread across seeds is large (one DQN seed scores 57, another 472) and the two methods' learning curves overlap at every evaluation point, so we do not claim one is better. DQN scores also move a lot between checkpoints of the same run. No ablation survives a correction for multiple comparisons; the clearest observations are that a finer Q-table (3600 states) and adding `y` to the DQN input both lowered scores (Welch p of 0.05 and 0.06, uncorrected).
+DQN has the higher mean at 3M, but the spread across seeds is large (one DQN seed scores 57, another 472) and the one-standard-deviation bands of the two learning curves overlap at 10 of the 12 evaluation points, so we do not claim one is better. DQN scores also move a lot between checkpoints of the same run. No ablation survives a correction for multiple comparisons; the clearest observations are that a finer Q-table (3600 states) and adding `y` to the DQN input both lowered scores (Welch p of 0.05 and 0.06, uncorrected).
 
 ## Layout
 

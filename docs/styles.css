@@ -1,0 +1,131 @@
+:root {
+  --bg: #fbfbfa;
+  --text: #2f3437;
+  --muted: #5f5e5b; /* 6.0:1 on --bg */
+  --rule: #eaeaea;
+  --accent: #2f5d7c; /* 7.0:1 on --bg */
+  --sans: system-ui, -apple-system, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+  --serif: "Iowan Old Style", "Palatino Linotype", Charter, Georgia, serif;
+  --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+}
+
+* { box-sizing: border-box; }
+
+html { -webkit-text-size-adjust: 100%; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font: 1rem/1.65 var(--sans);
+}
+
+.wrap {
+  max-width: 46rem;
+  margin: 0 auto;
+  padding: 0 1rem;
+}
+
+.skip {
+  position: absolute;
+  left: 1rem;
+  top: -4rem;
+  padding: 0.5rem 0.75rem;
+  background: var(--text);
+  color: var(--bg);
+}
+.skip:focus { top: 0.5rem; }
+
+a { color: var(--accent); text-underline-offset: 0.18em; }
+a:focus-visible, video:focus-visible, .scroll:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* Header */
+.hero { padding: 5rem 0 3rem; border-bottom: 1px solid var(--rule); }
+.meta {
+  margin: 0 0 1.5rem;
+  font: 0.8125rem/1.4 var(--mono);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+h1 {
+  margin: 0 0 1.5rem;
+  font: 400 clamp(2.25rem, 7vw, 3.5rem)/1.1 var(--serif);
+  letter-spacing: -0.03em;
+}
+.question { margin: 0 0 1.25rem; font-size: 1.25rem; line-height: 1.5; }
+.result { margin: 0 0 1.5rem; color: var(--muted); }
+.result strong { color: var(--text); font-weight: 600; }
+.repo {
+  display: inline-block;
+  padding: 0.5rem 1rem;
+  background: #111;
+  color: #fff;
+  border-radius: 4px;
+  text-decoration: none;
+}
+.repo:hover { background: #333; }
+.repo:focus-visible { outline-color: #111; }
+
+/* Contents */
+nav { padding: 1rem 0; border-bottom: 1px solid var(--rule); font-size: 0.9375rem; }
+nav ul { display: flex; flex-wrap: wrap; gap: 0.25rem 1.25rem; margin: 0; padding: 0; list-style: none; }
+
+/* Sections */
+section { padding: 4rem 0 0.5rem; }
+section + section { border-top: 1px solid var(--rule); margin-top: 3.5rem; }
+h2 {
+  margin: 0 0 1.25rem;
+  font: 400 1.75rem/1.2 var(--serif);
+  letter-spacing: -0.02em;
+}
+h3 { margin: 2rem 0 0.5rem; font-size: 1rem; font-weight: 600; }
+p, ul, ol, dl { margin: 0 0 1.25rem; }
+ul, ol { padding-left: 1.25rem; }
+li + li { margin-top: 0.4rem; }
+code, kbd { font: 0.875em var(--mono); background: #f1f0ed; padding: 0.1em 0.3em; border-radius: 4px; }
+pre {
+  margin: 0 0 1.25rem;
+  padding: 1rem;
+  overflow-x: auto;
+  background: #f1f0ed;
+  border-radius: 4px;
+  font: 0.8125rem/1.5 var(--mono);
+}
+pre code { padding: 0; background: none; }
+.note { color: var(--muted); font-size: 0.9375rem; }
+
+dl.setup { display: grid; grid-template-columns: 9rem 1fr; gap: 0.6rem 1.25rem; }
+dl.setup dt { color: var(--muted); }
+dl.setup dd { margin: 0; }
+
+/* Tables */
+.scroll { overflow-x: auto; margin: 0 0 1.25rem; }
+table { width: 100%; border-collapse: collapse; font-size: 0.9375rem; font-variant-numeric: tabular-nums; }
+th, td { padding: 0.55rem 0.75rem 0.55rem 0; border-bottom: 1px solid var(--rule); text-align: right; white-space: nowrap; }
+th:first-child, td:first-child { text-align: left; white-space: normal; min-width: 8.5rem; }
+thead th { border-bottom-color: var(--text); font-weight: 600; }
+tbody tr:last-child td { border-bottom: 0; }
+
+/* Figures and videos */
+figure { margin: 0 0 1.5rem; }
+figure img { display: block; width: 100%; height: auto; border: 1px solid var(--rule); background: #fff; }
+figcaption { margin-top: 0.6rem; color: var(--muted); font-size: 0.875rem; line-height: 1.5; }
+.videos { display: grid; grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr)); gap: 2rem 1.5rem; margin-bottom: 1.5rem; }
+.videos figure { margin: 0; }
+.videos video { display: block; width: 100%; max-width: 288px; height: auto; aspect-ratio: 288 / 512; background: #111; }
+.videos h3 { margin-top: 0; }
+
+footer { margin-top: 4rem; padding: 2rem 0 3rem; border-top: 1px solid var(--rule); color: var(--muted); font-size: 0.875rem; }
+
+@media (max-width: 34rem) {
+  .hero { padding: 3rem 0 2rem; }
+  section { padding-top: 3rem; }
+  table { font-size: 0.8125rem; }
+  th, td { padding-right: 0.5rem; }
+  dl.setup { grid-template-columns: 1fr; gap: 0.1rem; }
+  dl.setup dd { margin-bottom: 0.75rem; }
+}

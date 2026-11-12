@@ -5,7 +5,7 @@ python -m scripts.ablation_report --main results/main --ablation results/ablatio
 Every ablation config is compared with the reference run of the same method (`results/main`:
 720 states, no y, alive reward on, p_flap 0.05). Statistical unit is the training seed (n=5):
 per-seed score = mean over 100 final-eval episodes (cap 500). The Welch p-values are two-sided and
-NOT corrected for the 12 comparisons; with n=5 they are a rough guide, not a verdict.
+NOT corrected for the 13 comparisons; with n=5 they are a rough guide, not a verdict.
 """
 import argparse
 import json
@@ -83,7 +83,7 @@ def latex_table(data) -> str:
 
 
 def figure(data, path: Path) -> None:
-    fig, axes = plt.subplots(1, 2, figsize=(9, 4), sharex=True, gridspec_kw={"width_ratios": [8, 5]})
+    fig, axes = plt.subplots(2, 1, figsize=(6.5, 7.2), sharex=True, gridspec_kw={"height_ratios": [9, 6]})
     for ax, (method, rows) in zip(axes, data.items()):
         ref_mean = np.mean(rows[0][2])
         for i, (name, label, scores) in enumerate(rows[::-1]):
@@ -91,9 +91,10 @@ def figure(data, path: Path) -> None:
             ax.scatter(scores, y, s=14, color="tab:gray" if name == "reference" else "tab:blue", alpha=0.7, zorder=3)
             ax.plot([np.mean(scores)] * 2, [i - 0.3, i + 0.3], color="black", lw=2, zorder=4)
         ax.axvline(ref_mean, color="tab:red", ls=":", lw=1)
-        ax.set_yticks(range(len(rows)), [r[1] for r in rows[::-1]], fontsize=8)
-        ax.set_title(METHOD_NAMES[method], fontsize=10)
-        ax.set_xlabel("Score at 3M (per-seed mean)")
+        ax.set_yticks(range(len(rows)), [r[1] for r in rows[::-1]], fontsize=9)
+        ax.set_title(METHOD_NAMES[method], fontsize=11, loc="left")
+        ax.tick_params(axis="x", labelsize=9)
+    axes[-1].set_xlabel("Score at 3M (per-seed mean)", fontsize=9)
     fig.tight_layout()
     fig.savefig(path.with_suffix(".pdf"))
     fig.savefig(path.with_suffix(".png"), dpi=200)
