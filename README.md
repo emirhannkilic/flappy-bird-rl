@@ -1,5 +1,7 @@
 # Flappy Bird RL
 
+Project page with results, figures and videos: https://emirhannkilic.github.io/flappy-bird-rl/
+
 Tabular Q-learning and DQN on `flappy-bird-gymnasium` (`FlappyBird-v0`), compared on the same three state features, the same exploration schedule and the same evaluation protocol. Course project for CMP4501.
 
 Both agents see three features derived from the raw observation: the horizontal distance to the pipe that currently constrains the bird (`dx`), the vertical offset to the gap centre (`dy`) and the vertical velocity (`vy`). Q-learning discretises them into 720 states; DQN takes them as scaled inputs to a 3-64-64-2 network. The absolute height `y` is only used in ablations.

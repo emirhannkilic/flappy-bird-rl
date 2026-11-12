@@ -73,6 +73,7 @@ h1 {
 /* Contents */
 nav { padding: 1rem 0; border-bottom: 1px solid var(--rule); font-size: 0.9375rem; }
 nav ul { display: flex; flex-wrap: wrap; gap: 0.25rem 1.25rem; margin: 0; padding: 0; list-style: none; }
+nav li + li { margin-top: 0; }
 
 /* Sections */
 section { padding: 4rem 0 0.5rem; }
